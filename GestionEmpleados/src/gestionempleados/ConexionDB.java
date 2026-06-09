@@ -1,4 +1,4 @@
-package pruebas;
+package gestionempleados;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
