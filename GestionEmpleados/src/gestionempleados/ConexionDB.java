@@ -8,7 +8,7 @@ public class ConexionDB {
     // Configuración de la URL de conexión, usuario y contraseña
     private static final String URL = "jdbc:mysql://localhost:3306/empresa_db?useSSL=false&serverTimezone=UTC";
     private static final String USER = "root";
-    private static final String PASSWORD = "";
+    private static final String PASSWORD = ""; //agregar contraseña al probar
 
     public static Connection conectar() {
         Connection conexion = null;
