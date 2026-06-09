@@ -8,6 +8,7 @@ import javax.swing.table.DefaultTableModel;
 public class VentanaPrincipal extends javax.swing.JFrame {
     private EmpleadoDAO empleadoDAO;
     private DefaultTableModel modeloTabla;
+    private String rutaFotoSeleccionada = ""; // Guarda el camino del archivo en la compu
     private static final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(VentanaPrincipal.class.getName());
 
    public VentanaPrincipal() {
@@ -21,30 +22,59 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         modeloTabla = (DefaultTableModel) tablaEmpleados.getModel();
         
         // Configuramos los títulos de las columnas de la tabla
-        String[] titulos = {"ID", "Nombre", "Departamento"};
+        String[] titulos = {"ID", "Nombre", "Departamento","Foto"};
         modeloTabla.setColumnIdentifiers(titulos);
         
         // Cargamos los datos por primera vez al abrir la aplicación
         cargarDatosTabla();
+        
+        cargarComboDepartamentos();
+        // --- OCULTAR LA COLUMNA FOTO DE LA VISTA ---
+        // Le decimos a la tabla que la columna 3 (la cuarta) tenga ancho cero y no se pueda redimensionar
+        tablaEmpleados.getColumnModel().getColumn(3).setMinWidth(0);
+        tablaEmpleados.getColumnModel().getColumn(3).setMaxWidth(0);
+        tablaEmpleados.getColumnModel().getColumn(3).setPreferredWidth(0);
+        
     }
     
-    // Método para poblar la tabla leyendo la base de datos
+    
     private void cargarDatosTabla() {
-        // Limpiamos el modelo por si ya tenía filas cargadas antes
         modeloTabla.setRowCount(0); 
         
-        // Invocamos consultarTodos() de nuestro DAO
         ArrayList<Empleado> lista = empleadoDAO.consultarTodos();
+        // Creamos una lista auxiliar de departamentos para cruzar los nombres visualmente
+        ArrayList<modelo.Departamento> deptos = empleadoDAO.consultarDepartamentos();
+        
         for (Empleado emp : lista) {
-            // Añadimos cada empleado como una fila en el JTable
+            // Buscamos el nombre del departamento que corresponda a ese id
+            String nombreDepto = "Sin Área";
+            for (modelo.Departamento d : deptos) {
+                if (d.getIdDepto() == emp.getIdDepartamento()) {
+                    nombreDepto = d.getNombreDepto();
+                    break;
+                }
+            }
+            
+            // Añadimos la fila incluyendo el nombre del depto y la ruta del archivo
             modeloTabla.addRow(new Object[]{
                 emp.getId(),
                 emp.getNombre(),
-                emp.getDepartamento()
+                nombreDepto,
+                emp.getRutaFoto() != null ? emp.getRutaFoto() : "Sin foto"
             });
         }
     }
-
+private void cargarComboDepartamentos() {
+        cmbDepartamento.removeAllItems();
+        
+        // Buscamos la lista de departamentos desde el DAO
+        ArrayList<modelo.Departamento> deptos = empleadoDAO.consultarDepartamentos();
+        
+        // Recorremos la lista y metemos los nombres como Strings
+        for (modelo.Departamento d : deptos) {
+            cmbDepartamento.addItem(d.getNombreDepto()); 
+        }
+    }
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -61,10 +91,13 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         txtId = new javax.swing.JTextField();
-        txtDepartamento = new javax.swing.JTextField();
         btnModificar = new javax.swing.JButton();
         btnEliminar = new javax.swing.JButton();
         btnAgregar = new javax.swing.JButton();
+        cmbDepartamento = new javax.swing.JComboBox<>();
+        btnBuscarFoto = new javax.swing.JButton();
+        jLabel4 = new javax.swing.JLabel();
+        lblFoto = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -98,8 +131,6 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         txtId.setEditable(false);
         txtId.addActionListener(this::txtIdActionPerformed);
 
-        txtDepartamento.addActionListener(this::txtDepartamentoActionPerformed);
-
         btnModificar.setText("Modificar");
         btnModificar.addActionListener(this::btnModificarActionPerformed);
 
@@ -109,18 +140,20 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         btnAgregar.setText("Agregar");
         btnAgregar.addActionListener(this::btnAgregarActionPerformed);
 
+        cmbDepartamento.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "Item 1", "Item 2", "Item 3", "Item 4" }));
+
+        btnBuscarFoto.setText("Buscar Foto");
+        btnBuscarFoto.addActionListener(this::btnBuscarFotoActionPerformed);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addGroup(layout.createSequentialGroup()
                         .addContainerGap()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btnEliminar)
-                            .addComponent(btnModificar)
-                            .addComponent(btnAgregar)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(jLabel2)
@@ -128,17 +161,33 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                                 .addGap(32, 32, 32)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                     .addComponent(txtNombre, javax.swing.GroupLayout.DEFAULT_SIZE, 114, Short.MAX_VALUE)
-                                    .addComponent(txtId)))))
+                                    .addComponent(txtId)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(btnModificar)
+                                    .addComponent(btnAgregar))
+                                .addGap(268, 268, 268)
+                                .addComponent(jLabel4))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(btnEliminar)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addComponent(lblFoto, javax.swing.GroupLayout.PREFERRED_SIZE, 178, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(20, 20, 20))))
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(jLabel3)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(txtDepartamento, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 114, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(btnBuscarFoto)
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(cmbDepartamento, javax.swing.GroupLayout.PREFERRED_SIZE, 108, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(0, 0, Short.MAX_VALUE)))))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 31, Short.MAX_VALUE)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 399, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(58, 58, 58))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 433, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addGap(22, 22, 22)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -151,15 +200,21 @@ public class VentanaPrincipal extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
-                    .addComponent(txtDepartamento, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(57, 57, 57)
-                .addComponent(btnModificar, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnEliminar, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(btnAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(153, Short.MAX_VALUE))
-            .addComponent(jScrollPane1)
+                    .addComponent(cmbDepartamento, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(btnBuscarFoto)
+                .addGap(22, 22, 22)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(btnModificar, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(btnEliminar, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblFoto, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, 0)
+                        .addComponent(btnAgregar, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel4))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -173,51 +228,60 @@ public class VentanaPrincipal extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtIdActionPerformed
 
-    private void txtDepartamentoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtDepartamentoActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtDepartamentoActionPerformed
-
     private void btnModificarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnModificarActionPerformed
         // TODO add your handling code here:
-        // 1. Recoger los nuevos valores de los JTextField (Paso 5 del PDF)
-    int id = Integer.parseInt(txtId.getText());
-    String nombre = txtNombre.getText();
-    String departamento = txtDepartamento.getText();
+   
+   if (!txtId.getText().isEmpty()) {
+            int id = Integer.parseInt(txtId.getText());
+            String nombre = txtNombre.getText();
+            
+            // Traemos la lista de departamentos de la base de datos
+            ArrayList<modelo.Departamento> deptos = empleadoDAO.consultarDepartamentos();
+            modelo.Departamento deptoSeleccionado = null;
+            
+            // Buscamos por índice
+            int indiceSeleccionado = cmbDepartamento.getSelectedIndex();
+            if (indiceSeleccionado != -1) {
+                deptoSeleccionado = deptos.get(indiceSeleccionado);
+            }
 
-    // 2. Crear un objeto Empleado con los datos capturados
-    Empleado emp = new Empleado(id, nombre, departamento);
+            if (!nombre.isEmpty() && deptoSeleccionado != null) {
+                Empleado emp = new Empleado(id, nombre, deptoSeleccionado.getIdDepto(), rutaFotoSeleccionada);
 
-    // 3. Pasarlo al método modificar del DAO
-    if (empleadoDAO.modificar(emp)) {
-        javax.swing.JOptionPane.showMessageDialog(this, "Empleado modificado con éxito.");
-        
-        // 4. Refrescar la tabla y limpiar los campos de texto
-        cargarDatosTabla();
-        txtId.setText("");
-        txtNombre.setText("");
-        txtDepartamento.setText("");
-    } else {
-        javax.swing.JOptionPane.showMessageDialog(this, "Error al modificar el empleado.");
-    }
+                if (empleadoDAO.modificar(emp)) {
+                    javax.swing.JOptionPane.showMessageDialog(this, "Empleado modified con éxito.");
+                    cargarDatosTabla();
+                    txtId.setText("");
+                    txtNombre.setText("");
+                    lblFoto.setIcon(null);
+                    rutaFotoSeleccionada = "";
+                } else {
+                    javax.swing.JOptionPane.showMessageDialog(this, "Error al modificar el empleado.");
+                }
+            }
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, "Seleccione un empleado de la tabla para modificar.");
+        }
     }//GEN-LAST:event_btnModificarActionPerformed
 
     private void btnEliminarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnEliminarActionPerformed
         // TODO add your handling code here:
-        // 1. Recoger únicamente el ID seleccionado (Paso 6 del PDF)
-    String idText = txtId.getText();
+  
+        String idText = txtId.getText();
     
     if (!idText.isEmpty()) {
         int id = Integer.parseInt(idText);
         
-        // 2. Pasarlo al método eliminar del DAO
+        // Ejecutamos la eliminación en el DAO (Paso 6 del PDF)
         if (empleadoDAO.eliminar(id)) {
             javax.swing.JOptionPane.showMessageDialog(this, "Empleado eliminado con éxito.");
             
-            // 3. Refrescar la tabla y limpiar las cajas de texto
+            // Refrescar y limpiar componentes
             cargarDatosTabla();
             txtId.setText("");
             txtNombre.setText("");
-            txtDepartamento.setText("");
+            lblFoto.setIcon(null);
+            rutaFotoSeleccionada = "";
         } else {
             javax.swing.JOptionPane.showMessageDialog(this, "Error al eliminar el empleado.");
         }
@@ -228,47 +292,94 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
     private void btnAgregarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnAgregarActionPerformed
         // TODO add your handling code here:
-        // 1. Capturar los datos de los JTextField (El ID no se pasa porque es AUTO_INCREMENT)
-    String nombre = txtNombre.getText();
-    String departamento = txtDepartamento.getText();
-
-    if (!nombre.isEmpty() && !departamento.isEmpty()) {
-        Empleado nuevoEmp = new Empleado(nombre, departamento);
+ String nombre = txtNombre.getText();
         
-        // 2. Invocar el método insertar del DAO
-        if (empleadoDAO.insertar(nuevoEmp)) {
-            javax.swing.JOptionPane.showMessageDialog(this, "Empleado agregado con éxito.");
-            cargarDatosTabla(); // Refresca la lista visual
-            
-            // Limpiar campos
-            txtNombre.setText("");
-            txtDepartamento.setText("");
-        } else {
-            javax.swing.JOptionPane.showMessageDialog(this, "Error al guardar el empleado.");
+        // Traemos la lista completa de departamentos de la base de datos
+        ArrayList<modelo.Departamento> deptos = empleadoDAO.consultarDepartamentos();
+        modelo.Departamento deptoSeleccionado = null;
+        
+        // Usamos el índice de la opción seleccionada en el combo para buscarlo en la lista
+        int indiceSeleccionado = cmbDepartamento.getSelectedIndex();
+        if (indiceSeleccionado != -1) {
+            deptoSeleccionado = deptos.get(indiceSeleccionado);
         }
-    } else {
-        javax.swing.JOptionPane.showMessageDialog(this, "Por favor complete Nombre y Departamento.");
-    }
+
+        if (!nombre.isEmpty() && deptoSeleccionado != null) {
+            Empleado nuevoEmp = new Empleado(nombre, deptoSeleccionado.getIdDepto(), rutaFotoSeleccionada);
+            if (empleadoDAO.insertar(nuevoEmp)) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Empleado agregado con éxito.");
+                cargarDatosTabla();
+                txtNombre.setText("");
+                lblFoto.setIcon(null);
+                rutaFotoSeleccionada = "";
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, "Error al guardar el empleado.");
+            }
+        } else {
+            javax.swing.JOptionPane.showMessageDialog(this, "Por favor, complete el nombre.");
+        }
     }//GEN-LAST:event_btnAgregarActionPerformed
 
     private void tablaEmpleadosMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_tablaEmpleadosMouseClicked
         // TODO add your handling code here:
-        // 1. Obtener la fila seleccionada por el usuario (Paso 3 del PDF)
-    int fila = tablaEmpleados.getSelectedRow();
+ int fila = tablaEmpleados.getSelectedRow(); 
     
-    // Si el usuario seleccionó una fila válida...
     if (fila != -1) {
-        // 2. Extraer los datos de la fila (Paso 4 del PDF)
         String id = tablaEmpleados.getValueAt(fila, 0).toString();
         String nombre = tablaEmpleados.getValueAt(fila, 1).toString();
-        String departamento = tablaEmpleados.getValueAt(fila, 2).toString();
+        String nombreDepto = tablaEmpleados.getValueAt(fila, 2).toString();
+        Object fotoObj = tablaEmpleados.getValueAt(fila, 3);
+        String foto = (fotoObj != null) ? fotoObj.toString() : "Sin foto";
         
-        // 3. Pasarle los datos a los JTextField correspondientes
         txtId.setText(id);
         txtNombre.setText(nombre);
-        txtDepartamento.setText(departamento);
+        
+       for (int i = 0; i < cmbDepartamento.getItemCount(); i++) {
+            if (cmbDepartamento.getItemAt(i).toString().equals(nombreDepto)) {
+                cmbDepartamento.setSelectedIndex(i);
+                break;
+            }
+        }
+        
+        if (foto != null && !foto.equals("Sin foto") && !foto.isEmpty()) {
+            rutaFotoSeleccionada = foto;
+            java.awt.Image imgOriginal = new javax.swing.ImageIcon(rutaFotoSeleccionada).getImage();
+            java.awt.Image imgEscalada = imgOriginal.getScaledInstance(lblFoto.getWidth(), lblFoto.getHeight(), java.awt.Image.SCALE_SMOOTH);
+            lblFoto.setIcon(new javax.swing.ImageIcon(imgEscalada)); 
+        } else {
+            rutaFotoSeleccionada = "";
+            lblFoto.setIcon(null);
+        }
     }
+
     }//GEN-LAST:event_tablaEmpleadosMouseClicked
+
+    private void btnBuscarFotoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarFotoActionPerformed
+        // TODO add your handling code here:
+      // 1. Instanciar el selector de archivos (JFileChooser)
+    javax.swing.JFileChooser selector = new javax.swing.JFileChooser();
+    
+    // Filtro para que solo deje seleccionar imágenes (JPG, PNG)
+    javax.swing.filechooser.FileNameExtensionFilter filtro = 
+            new javax.swing.filechooser.FileNameExtensionFilter("Imágenes (JPG, PNG)", "jpg", "jpeg", "png");
+    selector.setFileFilter(filtro);
+    
+    // 2. Abrir la ventana de diálogo del sistema operativo
+    int resultado = selector.showOpenDialog(this);
+    
+    // Si el usuario seleccionó un archivo y le dio a "Aceptar"...
+    if (resultado == javax.swing.JFileChooser.APPROVE_OPTION) {
+        // 3. Capturar la ruta del archivo seleccionado
+        rutaFotoSeleccionada = selector.getSelectedFile().getAbsolutePath();
+        
+        // 4. Dibujar y previsualizar la foto en el JLabel ajustando el tamaño
+        java.awt.Image imgOriginal = new javax.swing.ImageIcon(rutaFotoSeleccionada).getImage();
+        // Escalamos la imagen para que calce justo en las dimensiones de tu lblFoto
+        java.awt.Image imgEscalada = imgOriginal.getScaledInstance(lblFoto.getWidth(), lblFoto.getHeight(), java.awt.Image.SCALE_SMOOTH);
+        
+        lblFoto.setIcon(new javax.swing.ImageIcon(imgEscalada)); // Aplicamos la foto al Label
+    }
+    }//GEN-LAST:event_btnBuscarFotoActionPerformed
 
     /**
      * @param args the command line arguments
@@ -297,14 +408,17 @@ public class VentanaPrincipal extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnAgregar;
+    private javax.swing.JButton btnBuscarFoto;
     private javax.swing.JButton btnEliminar;
     private javax.swing.JButton btnModificar;
+    private javax.swing.JComboBox<String> cmbDepartamento;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel4;
     private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JLabel lblFoto;
     private javax.swing.JTable tablaEmpleados;
-    private javax.swing.JTextField txtDepartamento;
     private javax.swing.JTextField txtId;
     private javax.swing.JTextField txtNombre;
     // End of variables declaration//GEN-END:variables

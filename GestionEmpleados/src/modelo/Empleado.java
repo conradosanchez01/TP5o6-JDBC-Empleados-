@@ -3,23 +3,25 @@ package modelo;
 public class Empleado {
     private int id;
     private String nombre;
-    private String departamento;
+    private int idDepartamento; // Cambiado a int para la clave foránea
+    private String rutaFoto;    // Nuevo campo para la imagen
 
-    // Constructor vacío
     public Empleado() {
     }
 
-    // Constructor con todos los parámetros (útil para cuando traemos datos de la BD)
-    public Empleado(int id, String nombre, String departamento) {
+    // Constructor completo
+    public Empleado(int id, String nombre, int idDepartamento, String rutaFoto) {
         this.id = id;
         this.nombre = nombre;
-        this.departamento = departamento;
+        this.idDepartamento = idDepartamento;
+        this.rutaFoto = rutaFoto;
     }
 
-    // Constructor sin ID (útil para cuando creamos un empleado nuevo que todavía no se guardó)
-    public Empleado(String nombre, String departamento) {
+    // Constructor sin ID (para inserciones)
+    public Empleado(String nombre, int idDepartamento, String rutaFoto) {
         this.nombre = nombre;
-        this.departamento = departamento;
+        this.idDepartamento = idDepartamento;
+        this.rutaFoto = rutaFoto;
     }
 
     // Getters y Setters
@@ -29,6 +31,9 @@ public class Empleado {
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public String getDepartamento() { return departamento; }
-    public void setDepartamento(String departamento) { this.departamento = departamento; }
+    public int getIdDepartamento() { return idDepartamento; }
+    public void setIdDepartamento(int idDepartamento) { this.idDepartamento = idDepartamento; }
+
+    public String getRutaFoto() { return rutaFoto; }
+    public void setRutaFoto(String rutaFoto) { this.rutaFoto = rutaFoto; }
 }
