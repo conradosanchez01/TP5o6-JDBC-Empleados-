@@ -68,18 +68,18 @@ public class OperacionesDB {
     }
 
     // Método principal para poner a prueba todas las funciones
-    public static void main(String[] args) {
-        OperacionesDB ops = new OperacionesDB();
-        
-        System.out.println("--- Probando CRUD básico ---");
-        
-        // 1. Ejecutar un INSERT
-        ops.insertarEmpleado("Ana Garcia", "Recursos Humanos");
-        
-        // 2. Ejecutar un UPDATE (Suponiendo que es el ID 1)
-        ops.actualizarDepartamento(1, "Finanzas");
-        
+//    public static void main(String[] args) {
+//        OperacionesDB ops = new OperacionesDB();
+//        
+//        System.out.println("--- Probando CRUD básico ---");
+//        
+//        // 1. Ejecutar un INSERT
+//        ops.insertarEmpleado("Ana Garcia", "Recursos Humanos");
+//        
+//        // 2. Ejecutar un UPDATE (Suponiendo que es el ID 1)
+//        ops.actualizarDepartamento(1, "Finanzas");
+//        
         // 3. Ejecutar un DELETE
         // ops.borrarEmpleado(1);
-    }
+    //}
 }
